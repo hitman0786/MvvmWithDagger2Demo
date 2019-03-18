@@ -1,5 +1,6 @@
 package com.example.epaylater.remote
 
+import com.example.epaylater.model.BalanceResponse
 import com.example.epaylater.model.SpendModel
 import com.example.epaylater.model.TransactionResponse
 import com.google.gson.JsonObject
@@ -18,7 +19,7 @@ interface ApiService {
     fun getAuthToken(@Body locationPost:JsonObject): Observable<JsonObject>
 
     @GET("balance")
-    fun getCurrentBalance(): Observable<JsonObject>
+    fun getCurrentBalance(): Single<BalanceResponse>
 
     @GET("transactions")
     fun getTransactionsList(): Single<List<TransactionResponse>>

@@ -13,8 +13,7 @@ import android.widget.Toast
 import com.example.epaylater.EpayLaterApplication
 import com.example.epaylater.R
 import com.example.epaylater.di.factory.ViewModelFactory
-import com.example.epaylater.model.BalanceError
-import com.example.epaylater.model.BalanceModel
+import com.example.epaylater.model.BalanceResponse
 import com.example.epaylater.ui.home.viewmodel.BalanceViewModel
 import dagger.android.AndroidInjection
 import dagger.android.support.AndroidSupportInjection
@@ -48,54 +47,50 @@ class CurrentBalanceFragment: Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-
-        //perform viewmodel operations
-        mViewModel.getData()
-        observeBalance()
-        observeProgress()
-        observeError()
+        transactionViewModel()
     }
 
-    //Observe error
-    private fun observeError() {
-        mViewModel.getErrors().observe(this, Observer {
-            it?.let {
-                Toast.makeText(activity!!, it, Toast.LENGTH_LONG).show()
+    private fun transactionViewModel() {
+
+        mViewModel.getData().observe(activity!!, object: Observer<BalanceResponse>{
+            override fun onChanged(list:BalanceResponse?) {
+                if(list != null) {
+                    currentblinfoTV.visibility = View.VISIBLE
+                    currentblTV.visibility = View.VISIBLE
+                    currentblTV.text = String.format("%s %s", list.balance, list.currency)
+                }
             }
         })
-    }
 
-    //Show progress
-    private fun observeProgress() {
-        mViewModel.getProgress().observe(this, Observer {
-            progressBar.visibility = it.getVisibility()
-        })
-    }
+        mViewModel.getError().observe(activity!!, object: Observer<Boolean>{
+            override fun onChanged(isError: Boolean?) {
 
-    //Get balance updated data and update UI
-    private fun observeBalance() {
-        mViewModel.getBalanceModel().observe(this, Observer {
-            it?.let {
-                when (it) {
-                    is BalanceModel -> {
-                        mViewModel.getBalanceModel().postValue(it)
-                         currentblinfoTV.visibility = View.VISIBLE
-                         currentblTV.visibility = View.VISIBLE
-                         currentblTV.text = String.format("%s %s", it.balance, it.currency)
-
+                if (isError != null) {
+                    if(isError) {
+                        progressBar.visibility = View.GONE
+                        Toast.makeText(activity!!, "Found Some Error!", Toast.LENGTH_LONG).show()
                     }
-                    is BalanceError -> {
-                        mViewModel.getErrors().postValue(it.msg)
+                }
+            }
+        })
+
+        mViewModel.getLoading().observe(activity!!, object: Observer<Boolean>{
+            override fun onChanged(isLoading: Boolean?) {
+
+                if(isLoading != null){
+
+                    if(isLoading) {
+                        progressBar.visibility = View.VISIBLE
                         currentblinfoTV.visibility = View.GONE
+                        currentblTV.visibility = View.GONE
+                    }else{
+                        progressBar.visibility = View.GONE
+                        currentblinfoTV.visibility = View.VISIBLE
                         currentblTV.visibility = View.VISIBLE
-
-                         currentblTV.text = it.msg
-
                     }
                 }
             }
         })
     }
 
-    private fun Boolean?.getVisibility(): Int = if (this != null && this) View.VISIBLE else View.GONE
 }

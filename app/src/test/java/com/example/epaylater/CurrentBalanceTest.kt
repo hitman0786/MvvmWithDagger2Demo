@@ -1,35 +1,42 @@
 package com.example.epaylater
 
+import android.arch.core.executor.testing.InstantTaskExecutorRule
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
+import com.example.epaylater.model.BalanceResponse
 import com.example.epaylater.model.TransactionResponse
+import com.example.epaylater.remote.ApiService
+import com.example.epaylater.repository.BalanceRepository
 import com.example.epaylater.repository.TransactionsRepository
+import com.example.epaylater.ui.home.viewmodel.BalanceViewModel
 import com.example.epaylater.ui.home.viewmodel.TransactionViewModel
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import io.reactivex.Observable
 import io.reactivex.Single
 import junit.framework.Assert.assertEquals
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.mockito.junit.MockitoJUnitRunner
 import retrofit2.Response
+import org.json.JSONException
+import org.json.JSONObject
+import org.junit.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+
 
 @RunWith(MockitoJUnitRunner::class)
 class CurrentBalanceTest {
 
-    @Mock
-    private lateinit var mockRepository: TransactionsRepository
 
-    private lateinit var mViewModel: TransactionViewModel
-
-    @Mock
-    private lateinit var transactons: Observer<List<TransactionResponse>>
+    @Rule
+    @JvmField
+    var rule = InstantTaskExecutorRule()
 
     // Test rule for making the RxJava to run synchronously in unit test
     companion object {
@@ -38,37 +45,43 @@ class CurrentBalanceTest {
         val schedulers = RxImmediateSchedulerRule()
     }
 
+    @Mock
+    lateinit var apiService: ApiService
+    lateinit var repository: BalanceRepository
+
+    @Mock
+    lateinit var observer: Observer<BalanceResponse>
+
+    lateinit var balanceViewmodel: BalanceViewModel
+
+    lateinit var liveData: MutableLiveData<BalanceResponse>
+
+
     @Before
     fun setup(){
         MockitoAnnotations.initMocks(this)
-        mViewModel = TransactionViewModel(mockRepository)
+        repository = BalanceRepository(apiService)
+        balanceViewmodel = BalanceViewModel(repository)
+
+
     }
 
     @Test
     fun showDataFromCurrentBalanceApi(){
 
-        //Mockito.`when`(mockRepository.getTransactionsList()).thenReturn(Single.just(transactons.value))
+        val response = BalanceResponse("123","GBP")
 
-       // assertEquals(true, mainActivityViewModel.getLoading())
-        //assertEquals(getTransactions(), mainActivityViewModel.getTransactions())
+        val observer = mock<Observer<BalanceResponse>>()
+        balanceViewmodel.getData().observeForever(observer)
+        //when
+        liveData.value = response
+        //than
+        verify(observer).onChanged(listOf(BalanceResponse(response.balance,response.currency)))
 
-        // make the github api to return mock data
-        Mockito.`when`(mockRepository.getTransactionsList()).thenReturn(Single.just(getTransactions()))
-         // observe on the MutableLiveData with an observer
-        mViewModel.getTransactions().observeForever(transactons)
-
-        // assert that the name matches
-        assert(mViewModel.getTransactions().value!![0].amount == "35.25")
-
-       // Mockito.verify(mainActivityViewModel.transactons).value = transactons
+       /* Mockito.`when`(repository.getCurrentBalance()).thenReturn(Single.just(response))
+        balanceViewmodel.balanceModel.observeForever(observer)
+        val listdata = balanceViewmodel.getData()
+        assert(listdata.value!!.balance == response.balance)*/
     }
 
-    fun getTransactions(): List<TransactionResponse> {
-        val data = TransactionResponse("123",
-            "2016-12-11T12:23:34Z",
-            "A bag of spanners","35.25","GBP")
-        val datalist:List<TransactionResponse> = listOf(data)
-
-        return datalist
-    }
 }
