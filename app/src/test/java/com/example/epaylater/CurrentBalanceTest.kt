@@ -26,8 +26,7 @@ import retrofit2.Response
 import org.json.JSONException
 import org.json.JSONObject
 import org.junit.*
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
+import org.mockito.Mockito.*
 
 
 @RunWith(MockitoJUnitRunner::class)
@@ -38,19 +37,14 @@ class CurrentBalanceTest {
     @JvmField
     var rule = InstantTaskExecutorRule()
 
-    // Test rule for making the RxJava to run synchronously in unit test
-    companion object {
-        @ClassRule
-        @JvmField
-        val schedulers = RxImmediateSchedulerRule()
-    }
 
     @Mock
     lateinit var apiService: ApiService
-    lateinit var repository: BalanceRepository
 
     @Mock
-    lateinit var observer: Observer<BalanceResponse>
+    lateinit var balanceResponseObserver: Observer<BalanceResponse>
+
+    lateinit var repository: BalanceRepository
 
     lateinit var balanceViewmodel: BalanceViewModel
 
@@ -59,29 +53,28 @@ class CurrentBalanceTest {
 
     @Before
     fun setup(){
+
         MockitoAnnotations.initMocks(this)
         repository = BalanceRepository(apiService)
         balanceViewmodel = BalanceViewModel(repository)
 
+        liveData = MutableLiveData()
+        val paydata = Single.just(BalanceResponse("123", "GBP"))
 
+        `when`(repository.getCurrentBalance()).thenReturn(paydata)
+
+       // balanceResponseObserver = mock(Observer::class.java) as Observer<BalanceResponse>
+
+        balanceViewmodel.getData().observeForever(balanceResponseObserver)
     }
 
     @Test
     fun showDataFromCurrentBalanceApi(){
 
-        val response = BalanceResponse("123","GBP")
+       val data = BalanceResponse("290", "GBPO")
+        liveData.value = data
 
-        val observer = mock<Observer<BalanceResponse>>()
-        balanceViewmodel.getData().observeForever(observer)
-        //when
-        liveData.value = response
-        //than
-        verify(observer).onChanged(listOf(BalanceResponse(response.balance,response.currency)))
-
-       /* Mockito.`when`(repository.getCurrentBalance()).thenReturn(Single.just(response))
-        balanceViewmodel.balanceModel.observeForever(observer)
-        val listdata = balanceViewmodel.getData()
-        assert(listdata.value!!.balance == response.balance)*/
+        verify(balanceResponseObserver).onChanged(data)
     }
 
 }
