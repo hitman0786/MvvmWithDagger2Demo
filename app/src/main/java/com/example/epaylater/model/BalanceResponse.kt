@@ -10,7 +10,7 @@ data class BalanceResponse(@SerializedName("balance") val balance:String,
                         @SerializedName("currency") val currency:String){
 
 
-    override fun equals(obj: Any?): Boolean {
+   /* override fun equals(obj: Any?): Boolean {
         return balance == (obj as BalanceResponse).balance
-    }
+    }*/
 }

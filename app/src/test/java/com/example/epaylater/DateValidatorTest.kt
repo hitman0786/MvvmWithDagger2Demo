@@ -1,9 +1,7 @@
 package com.example.epaylater
 
 import com.example.epaylater.utlis.DateConverter
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertFalse
-import org.junit.Before
+import junit.framework.TestCase.assertEquals
 import org.junit.Test
 
 class DateConverterTest {

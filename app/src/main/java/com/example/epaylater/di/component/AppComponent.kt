@@ -11,6 +11,7 @@ import dagger.Component
 import dagger.android.support.AndroidSupportInjectionModule
 import javax.inject.Singleton
 
+@SuppressWarnings("unchecked")
 @Component(modules = [NetworkModule::class,
     ViewModelModule::class,
     ActivityModule::class,
